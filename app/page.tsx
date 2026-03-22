@@ -35,7 +35,7 @@ export default function Home() {
             Expert Guidance for Your Success
           </h1>
           <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-            Connect with industry professionals for 1:1 consultations. Get AI-powered recommendations based on real community feedback to make informed decisions.
+            Connect with industry professionals for 1:1 consultations. Get AI powered recommendations based on real community feedback to make informed decisions.
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             <Link href="/signup">
@@ -56,7 +56,7 @@ export default function Home() {
       <section className="px-4 sm:px-6 lg:px-8 pb-20">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
           <Card className="border-border p-8 text-center">
-            <div className="text-4xl font-bold text-primary mb-2">500+</div>
+            <div className="text-4xl font-bold text-primary mb-2">100+</div>
             <p className="text-muted-foreground">Expert Mentors</p>
           </Card>
           <Card className="border-border p-8 text-center">
@@ -154,13 +154,13 @@ export default function Home() {
             <div>
               <h4 className="font-semibold text-foreground mb-4">Connect</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="#" className="hover:text-foreground">Twitter</Link></li>
+                <li><Link href="#" className="hover:text-foreground">Instagram</Link></li>
                 <li><Link href="#" className="hover:text-foreground">LinkedIn</Link></li>
               </ul>
             </div>
           </div>
           <div className="border-t border-border pt-8 text-center text-sm text-muted-foreground">
-            <p>&copy; 2024 Worthmate. All rights reserved.</p>
+            <p>&copy; 2026 Worthmate. All rights reserved.</p>
           </div>
         </div>
       </footer>
