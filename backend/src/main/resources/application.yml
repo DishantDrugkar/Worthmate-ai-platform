@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: worthmate-api
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/worthmate
+    username: worthmate_user
+    password: worthmate_password
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+    show-sql: false
+  
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baselineOnMigrate: true
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+jwt:
+  secret: your-32-character-secret-key-change-this-in-production
+  expiration: 900000 # 15 minutes in milliseconds
+  refresh-expiration: 604800000 # 7 days in milliseconds
+
+agora:
+  app-id: your-agora-app-id
+  app-certificate: your-agora-app-certificate
+
+openai:
+  api-key: your-openai-api-key
+  model: gpt-4
+  max-tokens: 500
+
+stripe:
+  api-key: your-stripe-api-key
+  webhook-secret: your-stripe-webhook-secret
+
+logging:
+  level:
+    root: INFO
+    com.worthmate: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+  api-docs:
+    path: /v3/api-docs
