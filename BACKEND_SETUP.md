@@ -240,8 +240,8 @@ CREATE INDEX idx_mentor_availability_mentor_id ON mentor_availability(mentor_id)
 ## API Endpoints
 
 ### Authentication Endpoints
-- `POST /api/auth/signup/user` - User registration
-- `POST /api/auth/signup/mentor` - Mentor registration
+- `POST /api/auth/signup/user` - User registration ✅
+- `POST /api/auth/signup/mentor` - Mentor registration ✅
 - `POST /api/auth/login` - User login (returns JWT token)
 - `POST /api/auth/refresh` - Refresh JWT token
 - `POST /api/auth/logout` - User logout
