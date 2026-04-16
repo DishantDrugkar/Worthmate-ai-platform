@@ -46,7 +46,8 @@ export default function SignupPage() {
 
     try {
       const endpoint = userType === 'mentor' ? '/api/auth/signup/mentor' : '/api/auth/signup/user'
-      const response = await fetch(`http://localhost:8080${endpoint}`, {
+      const BASE_URL = process.env.NEXT_PUBLIC_API_URL
+      const response = await fetch(`${BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -59,14 +60,14 @@ export default function SignupPage() {
             bio: formData.bio,
           }),
         }),
-        credentials: 'include',
+       // credentials: 'include',
       })
 
       if (!response.ok) {
-        const data = await response.json()
-        setError(data.message || 'Signup failed')
-        return
-      }
+       const text = await response.text()
+       setError(text || 'Signup failed')
+       return
+}
 
       const data = await response.json()
       localStorage.setItem('token', data.token)
@@ -212,7 +213,9 @@ export default function SignupPage() {
               )}
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Password</label>
+               <label className="text-sm font-medium text-foreground">
+                 Password <span className="text-xs text-red-500">(min 6 characters)</span>
+               </label>
                 <Input
                   type="password"
                   name="password"

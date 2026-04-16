@@ -268,7 +268,7 @@ export default function MentorsPage() {
                               <p className="text-sm text-primary font-medium">{mentor.title}</p>
                             </div>
                             <div className="text-right">
-                              <p className="text-2xl font-bold text-foreground">${mentor.hourlyRate}</p>
+                              <p className="text-2xl font-bold text-foreground">₹{mentor.hourlyRate ?? 0}</p>
                               <p className="text-xs text-muted-foreground">per hour</p>
                             </div>
                           </div>

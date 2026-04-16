@@ -1,8 +1,8 @@
 ***************. AUTHENTICATION ******************
 
-POST   /api/auth/signup/user              - User registration
-POST   /api/auth/signup/mentor            - Mentor registration
-POST   /api/auth/login                    - User login (returns JWT)
+POST   /api/auth/signup/user              - User registration                  ✅
+POST   /api/auth/signup/mentor            - Mentor registration                ✅
+POST   /api/auth/login                    - User login (returns JWT)           ✅
 POST   /api/auth/refresh                  - Refresh JWT token
 POST   /api/auth/logout                   - User logout
 POST   /api/auth/forgot-password          - Request password reset
@@ -17,7 +17,7 @@ DELETE /api/users/account                 - Delete user account
 
 *********************  MENTOR **********************
 
-GET    /api/mentors                       - List all mentors (with filters, pagination)
+GET    /api/mentors                       - List all mentors (with filters, pagination).     ✅
 GET    /api/mentors/{mentorId}            - Get mentor details with reviews
 GET    /api/mentors/{mentorId}/availability   - Get mentor availability
 PUT    /api/mentors/{mentorId}            - Update mentor profile
