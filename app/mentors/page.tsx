@@ -12,6 +12,7 @@ interface Mentor {
   id: string
   firstName: string
   lastName: string
+  profilePic?: string
   title: string
   bio: string
   rating: number
@@ -105,6 +106,12 @@ export default function MentorsPage() {
     }
   }
 
+  const handleLogout = () => {
+  localStorage.removeItem("token")
+  localStorage.removeItem("userRole")
+  router.push("/") // main page pe redirect
+}
+
   const filterAndSortMentors = () => {
     let filtered = mentors.filter(mentor => {
       const matchesSearch =
@@ -162,9 +169,9 @@ export default function MentorsPage() {
             <Link href="/profile">
               <Button variant="ghost">Profile</Button>
             </Link>
-            <Link href="/login">
-              <Button variant="outline">Sign Out</Button>
-            </Link>
+            <Button variant="outline" onClick={handleLogout}>
+              Sign Out
+            </Button>
           </div>
         </div>
       </nav>
@@ -254,9 +261,19 @@ export default function MentorsPage() {
                     <Card key={mentor.id} className="border-border p-6 hover:border-primary/50 transition-colors">
                       <div className="flex flex-col md:flex-row gap-6">
                         {/* Avatar */}
-                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-secondary flex-shrink-0 flex items-center justify-center text-white font-bold text-2xl">
-                          {mentor.firstName[0]}{mentor.lastName[0]}
-                        </div>
+                        <div className="w-20 h-20 rounded-full overflow-hidden border bg-gray-200 flex items-center justify-center flex-shrink-0">
+  {mentor.profilePic ? (
+    <img
+      src={mentor.profilePic}
+      alt="mentor"
+      className="w-full h-full object-cover"
+    />
+  ) : (
+    <span className="text-xl font-bold text-gray-600">
+      {mentor.firstName[0]}{mentor.lastName[0]}
+    </span>
+  )}
+</div>
 
                         {/* Content */}
                         <div className="flex-1">

@@ -26,7 +26,6 @@ export default function LoginPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
-        credentials: 'include',
       })
 
       if (!response.ok) {
@@ -40,7 +39,7 @@ export default function LoginPage() {
       localStorage.setItem('userRole', data.role)
       
       if (data.role === 'MENTOR') {
-        router.push('/mentor/dashboard')
+        router.push('/mentors')
       } else if (data.role === 'ADMIN') {
         router.push('/admin/dashboard')
       } else {
