@@ -42,69 +42,35 @@ export default function MentorsPage() {
   }, [mentors, searchTerm, selectedExpertise, sortBy])
 
   const fetchMentors = async () => {
-    try {
-      const response = await fetch('http://localhost:8080/api/mentors', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        credentials: 'include',
-      })
+  try {
+    const token = localStorage.getItem('token')
 
-      if (response.ok) {
-        const data = await response.json()
-        setMentors(data)
-      }
-    } catch (err) {
-      console.error('Error fetching mentors:', err)
-      // Demo data
-      setMentors([
-        {
-          id: '1',
-          firstName: 'Sarah',
-          lastName: 'Johnson',
-          title: 'Senior Product Manager at Google',
-          bio: 'I help aspiring PMs develop skills in product strategy, user research, and cross-functional leadership.',
-          rating: 4.9,
-          reviewCount: 127,
-          hourlyRate: 150,
-          expertise: ['Product Management', 'Strategy', 'Leadership'],
-          availability: true,
-          aiRecommendationScore: 95,
-          recommendationReason: 'Based on 43 similar consultation feedbacks with 94% success rate',
-        },
-        {
-          id: '2',
-          firstName: 'Mike',
-          lastName: 'Chen',
-          title: 'Full Stack Engineer at Meta',
-          bio: 'Expert in scaling systems and mentoring junior engineers. Specializing in backend architecture.',
-          rating: 4.8,
-          reviewCount: 89,
-          hourlyRate: 120,
-          expertise: ['Backend', 'System Design', 'DevOps'],
-          availability: true,
-          aiRecommendationScore: 88,
-          recommendationReason: 'Highly rated for backend system design consultations',
-        },
-        {
-          id: '3',
-          firstName: 'Elena',
-          lastName: 'Rodriguez',
-          title: 'Startup Founder & Investor',
-          bio: 'I mentor early-stage founders on fundraising, business model validation, and growth strategies.',
-          rating: 4.7,
-          reviewCount: 156,
-          hourlyRate: 200,
-          expertise: ['Startups', 'Fundraising', 'Growth'],
-          availability: true,
-          aiRecommendationScore: 92,
-          recommendationReason: 'Expert in startup fundraising with consistent positive outcomes',
-        },
-      ])
-    } finally {
-      setLoading(false)
+    // 🔥 ADD THIS CHECK
+    if (!token) {
+      router.push('/login')
+      return
     }
+
+    const response = await fetch('http://localhost:8080/api/mentors', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error("Unauthorized")
+    }
+
+    const data = await response.json()
+    setMentors(data)
+
+  } catch (err) {
+    console.error('Error fetching mentors:', err)
+    setMentors([]) // ❌ remove demo data
+  } finally {
+    setLoading(false)
   }
+}
 
   const handleLogout = () => {
   localStorage.removeItem("token")

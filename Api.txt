@@ -20,7 +20,7 @@ DELETE /api/users/account                 - Delete user account
 GET    /api/mentors                       - List all mentors (with filters, pagination).     ✅
 GET    /api/mentors/{mentorId}            - Get mentor details with reviews
 GET    /api/mentors/{mentorId}/availability   - Get mentor availability
-PUT    /api/mentors/{mentorId}            - Update mentor profile
+PUT    /api/mentors/{mentorId}            - Update mentor profile                            ✅
 GET    /api/mentors/{mentorId}/reviews    - Get all reviews for mentor
 GET    /api/mentors/{mentorId}/earnings   - Get mentor earnings dashboard
 

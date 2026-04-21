@@ -39,14 +39,14 @@ export default function LoginPage() {
       localStorage.setItem('userRole', data.role)
       
       if (data.role === 'MENTOR') {
-        router.push('/mentors')
+        router.push('/mentor/dashboard')
       } else if (data.role === 'ADMIN') {
         router.push('/admin/dashboard')
       } else {
         router.push('/mentors')
       }
     } catch (err) {
-      setError('An error occurred. Please try again.')
+      setError('Server Error. Please try again.')
     } finally {
       setLoading(false)
     }

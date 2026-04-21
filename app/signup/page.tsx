@@ -73,7 +73,7 @@ export default function SignupPage() {
       localStorage.setItem('token', data.token)
       localStorage.setItem('userRole', userType === 'mentor' ? 'MENTOR' : 'USER')
       
-      router.push(userType === 'mentor' ? '/mentor/onboarding' : '/mentors')
+      router.push(userType === 'mentor' ? '/mentor/dashboard' : '/mentors')
     } catch (err) {
       setError('An error occurred. Please try again.')
     } finally {
