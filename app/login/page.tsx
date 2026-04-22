@@ -21,7 +21,6 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      // In real implementation, this will call the Spring Boot backend
       const response = await fetch('http://localhost:8080/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -35,9 +34,34 @@ export default function LoginPage() {
       }
 
       const data = await response.json()
+
+      // 🔥 DEBUG (IMPORTANT)
+      console.log("🔥 LOGIN RESPONSE:", data)
+
+      // ✅ SAFE extraction (handles all backend formats)
+      const userId = data.userId || data?.user?.id
+      const userEmail = data.email || data?.user?.email
+
+      if (!userId) {
+        console.error("❌ userId not found in response")
+        setError("Invalid login response from server")
+        return
+      }
+
+      // ✅ Store data properly
       localStorage.setItem('token', data.token)
       localStorage.setItem('userRole', data.role)
-      
+
+      localStorage.setItem(
+        'user',
+        JSON.stringify({
+          userId: userId,
+          email: userEmail,
+          role: data.role
+        })
+      )
+
+      // ✅ Redirect
       if (data.role === 'MENTOR') {
         router.push('/mentor/dashboard')
       } else if (data.role === 'ADMIN') {
@@ -45,7 +69,9 @@ export default function LoginPage() {
       } else {
         router.push('/mentors')
       }
+
     } catch (err) {
+      console.error("❌ Login Error:", err)
       setError('Server Error. Please try again.')
     } finally {
       setLoading(false)
@@ -55,6 +81,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/10 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
+
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold mx-auto mb-4 text-xl">
@@ -67,15 +94,17 @@ export default function LoginPage() {
         {/* Login Card */}
         <Card className="border-border p-8">
           <form onSubmit={handleLogin} className="space-y-6">
+
             {error && (
               <div className="flex gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-                <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                <AlertCircle className="h-5 w-5 text-destructive" />
                 <p className="text-sm text-destructive">{error}</p>
               </div>
             )}
 
+            {/* Email */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Email Address</label>
+              <label className="text-sm font-medium">Email Address</label>
               <Input
                 type="email"
                 placeholder="you@example.com"
@@ -83,13 +112,13 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading}
-                className="bg-input text-foreground placeholder:text-muted-foreground"
               />
             </div>
 
+            {/* Password */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-foreground">Password</label>
+              <div className="flex justify-between">
+                <label className="text-sm font-medium">Password</label>
                 <Link href="/forgot-password" className="text-sm text-primary hover:underline">
                   Forgot password?
                 </Link>
@@ -101,20 +130,22 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
-                className="bg-input text-foreground placeholder:text-muted-foreground"
               />
             </div>
 
+            {/* Button */}
             <Button
               type="submit"
-              className="w-full bg-primary hover:bg-primary/90 h-10"
+              className="w-full"
               disabled={loading}
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
+
           </form>
 
-          <div className="mt-6 text-center text-sm text-muted-foreground">
+          {/* Signup */}
+          <div className="mt-6 text-center text-sm">
             Don't have an account?{' '}
             <Link href="/signup" className="text-primary hover:underline font-medium">
               Sign up
@@ -122,12 +153,13 @@ export default function LoginPage() {
           </div>
         </Card>
 
-        {/* Demo Info */}
-        <div className="mt-8 p-4 bg-secondary/10 border border-border rounded-lg">
-          <p className="text-xs text-muted-foreground text-center">
-            <strong>Demo:</strong> Use any email and password. Backend integration required for production.
+        {/* Demo */}
+        <div className="mt-8 p-4 bg-secondary/10 border rounded-lg">
+          <p className="text-xs text-center">
+            <strong>Demo:</strong> Use backend credentials
           </p>
         </div>
+
       </div>
     </div>
   )
