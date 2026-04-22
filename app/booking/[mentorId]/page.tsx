@@ -1,18 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { useRouter, useParams } from 'next/navigation'
+import { motion } from 'framer-motion'
 
 interface Mentor {
   id: string
   firstName: string
   lastName: string
-  title: string
-  hourlyRate: number
-  expertise: string[]
 }
 
 interface TimeSlot {
@@ -25,84 +22,100 @@ interface TimeSlot {
 export default function BookingPage() {
   const router = useRouter()
   const params = useParams()
-  const mentorId = params.mentorId as string
+
+  const mentorId = params?.mentorId as string
 
   const [mentor, setMentor] = useState<Mentor | null>(null)
+  const [slots, setSlots] = useState<TimeSlot[]>([])
   const [loading, setLoading] = useState(true)
 
-  const [selectedDate, setSelectedDate] = useState('')
-  const [selectedSlotId, setSelectedSlotId] = useState('')
-  const [problemCategory, setProblemCategory] = useState('')
-  const [problemDescription, setProblemDescription] = useState('')
-  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])
-
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
-  const [booking, setBooking] = useState(false)
-
+  // =========================
+  // FETCH DATA SAFE
+  // =========================
   useEffect(() => {
-    fetchMentorDetails()
-  }, [])
+    if (!mentorId) return
 
-  useEffect(() => {
-    if (selectedDate) {
-      fetchAvailableSlots()
-    } else {
-      setTimeSlots([])
-      setSelectedSlotId('')
+    const loadData = async () => {
+      try {
+        setLoading(true)
+
+        await Promise.all([fetchMentor(), fetchAllSlots()])
+
+      } finally {
+        setLoading(false)
+      }
     }
-  }, [selectedDate])
 
-  const fetchMentorDetails = async () => {
+    loadData()
+  }, [mentorId])
+
+  // =========================
+  // FETCH MENTOR
+  // =========================
+  const fetchMentor = async () => {
     try {
-      const res = await fetch(`http://localhost:8080/api/mentors/${mentorId}`)
-      const data = await res.json()
-      setMentor(data)
-    } catch {
-      setMentor({
-        id: mentorId,
-        firstName: 'Demo',
-        lastName: 'Mentor',
-        title: 'Software Engineer',
-        hourlyRate: 100,
-        expertise: ['Tech'],
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchAvailableSlots = async () => {
-    try {
-      console.log("Selected Date (frontend):", selectedDate)
-
       const res = await fetch(
-        `http://localhost:8080/api/mentors/${mentorId}/availability?date=${selectedDate}`
+        `http://localhost:8080/api/mentors/${mentorId}`
       )
 
+      if (!res.ok) throw new Error('Mentor not found')
+
       const data = await res.json()
+      setMentor(data)
 
-      console.log("Slots from backend:", data)
-
-      setTimeSlots(Array.isArray(data) ? data : [])
-      setSelectedSlotId('')
     } catch (err) {
-      console.log(err)
-      setTimeSlots([])
+      console.error('Mentor error:', err)
+      setMentor(null)
     }
   }
 
-  const handleBooking = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
+  // =========================
+  // FETCH SLOTS
+  // =========================
+  const fetchAllSlots = async () => {
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/mentors/${mentorId}/availability/all`
+      )
 
-    if (!selectedSlotId || !problemCategory) {
-      setError('Please select slot and category')
-      return
+      if (!res.ok) throw new Error('Slots not found')
+
+      const data = await res.json()
+      setSlots(data)
+
+    } catch (err) {
+      console.error('Slots error:', err)
+      setSlots([])
     }
+  }
 
-    setBooking(true)
+  // =========================
+  // FORMAT TIME
+  // =========================
+  const formatDateTime = (date: string, time: string) => {
+    const d = new Date(date)
 
+    const formattedDate = d.toLocaleDateString('en-GB')
+    const day = d.toLocaleDateString('en-US', {
+      weekday: 'long'
+    }).toUpperCase()
+
+    const start = time.slice(0, 5)
+
+    const [h, m] = time.split(':')
+    const endDate = new Date()
+    endDate.setHours(Number(h) + 1)
+    endDate.setMinutes(Number(m))
+
+    const end = endDate.toTimeString().slice(0, 5)
+
+    return `${formattedDate}  ${start} - ${end} (${day})`
+  }
+
+  // =========================
+  // BOOK SLOT → PAYMENT
+  // =========================
+  const handleBook = async (slotId: string) => {
     try {
       const res = await fetch('http://localhost:8080/api/bookings', {
         method: 'POST',
@@ -111,107 +124,113 @@ export default function BookingPage() {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify({
-          availabilityId: selectedSlotId,
-          problemCategory,
-          problemDescription,
+          availabilityId: slotId,
+          problemCategory: 'general',
+          problemDescription: 'Quick booking',
         }),
       })
 
       if (!res.ok) {
-        const err = await res.json()
-        setError(err.message || 'Booking failed')
+        alert('Booking failed')
         return
       }
 
       const data = await res.json()
-      setSuccess(true)
 
-      setTimeout(() => {
-        router.push(`/booking/confirmation/${data.bookingId}`)
-      }, 1200)
+      // 👉 redirect to payment page
+      router.push(`/payment/${data.bookingId}`)
 
-    } catch {
-      setError('Something went wrong')
-    } finally {
-      setBooking(false)
+    } catch (err) {
+      console.error(err)
+      alert('Something went wrong')
     }
   }
 
-  if (loading) return <p className="text-center mt-10">Loading...</p>
+  // =========================
+  // LOADING
+  // =========================
+  if (loading) {
+    return (
+      <p className="text-center mt-10">
+        Loading...
+      </p>
+    )
+  }
 
   return (
-    <div className="max-w-4xl mx-auto py-10">
-      <h1 className="text-2xl font-bold mb-6">Book Session</h1>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
 
-      <Card className="p-6">
-        <form onSubmit={handleBooking} className="space-y-5">
+      {/* NAVBAR */}
+      <div className="flex justify-between items-center px-8 py-4 bg-white shadow-sm sticky top-0 z-50">
+        <h1
+          className="text-xl font-bold text-blue-600 cursor-pointer"
+          onClick={() => router.push('/')}
+        >
+          Worthmate
+        </h1>
+      </div>
 
-          {error && <p className="text-red-500">{error}</p>}
-          {success && <p className="text-green-600">Booking Success!</p>}
+      {/* MAIN */}
+      <div className="max-w-5xl mx-auto py-10">
 
-          {/* Category */}
-          <select
-            value={problemCategory}
-            onChange={(e) => setProblemCategory(e.target.value)}
-            className="w-full border p-2 rounded"
-          >
-            <option value="">Select Category</option>
-            <option value="career">Career</option>
-            <option value="technical">Technical</option>
-          </select>
+        {/* TITLE */}
+        <motion.h1
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-2xl font-bold mb-6"
+        >
+          Book Session with {mentor?.firstName} {mentor?.lastName}
+        </motion.h1>
 
-          {/* Description */}
-          <textarea
-            placeholder="Describe problem"
-            value={problemDescription}
-            onChange={(e) => setProblemDescription(e.target.value)}
-            className="w-full border p-2 rounded"
-          />
+        {/* SLOTS */}
+        <Card className="p-6 space-y-4 shadow-lg">
 
-          {/* Date */}
-          <Input
-            type="date"
-            value={selectedDate}
-            min={new Date().toISOString().split('T')[0]}
-            onChange={(e) => {
-              const date = e.target.value
-              setSelectedDate(date)   // ✅ FIXED (no timezone issue)
-            }}
-          />
+          {slots.length === 0 ? (
+            <p>No slots available</p>
+          ) : (
+            slots.map((slot, index) => (
+              <motion.div
+                key={slot.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="flex justify-between items-center border p-4 rounded-xl bg-white hover:shadow-md transition"
+              >
 
-          {/* Slots */}
-          <select
-            value={selectedSlotId}
-            onChange={(e) => setSelectedSlotId(e.target.value)}
-            className="w-full border p-2 rounded"
-            disabled={!selectedDate}
-          >
-            <option value="">Select Slot</option>
+                {/* LEFT */}
+                <div>
+                  <p className="font-medium text-gray-800">
+                    {formatDateTime(slot.date, slot.time)}
+                  </p>
+                </div>
 
-            {timeSlots.length === 0 ? (
-              <option disabled>No slots available</option>
-            ) : (
-              timeSlots.map(slot => (
-                <option key={slot.id} value={slot.id}>
-                  {slot.time?.slice(0, 5)} {slot.booked ? '(Booked)' : ''}
-                </option>
-              ))
-            )}
-          </select>
+                {/* RIGHT */}
+                <div className="flex items-center gap-4">
 
-          {/* No slots message */}
-          {selectedDate && timeSlots.length === 0 && (
-            <p className="text-red-500 text-sm">
-              No slots available for this date
-            </p>
+                  <span
+                    className={`text-sm font-semibold ${
+                      slot.booked ? 'text-red-500' : 'text-green-600'
+                    }`}
+                  >
+                    {slot.booked ? 'Booked' : 'Available'}
+                  </span>
+
+                  {!slot.booked && (
+                    <Button
+                      onClick={() => handleBook(slot.id)}
+                    >
+                      Book Now
+                    </Button>
+                  )}
+
+                </div>
+
+              </motion.div>
+            ))
           )}
 
-          <Button type="submit" disabled={booking}>
-            {booking ? 'Booking...' : 'Book Now'}
-          </Button>
-
-        </form>
-      </Card>
+        </Card>
+      </div>
     </div>
   )
 }
