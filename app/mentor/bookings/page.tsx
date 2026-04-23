@@ -51,8 +51,17 @@ export default function MentorBookingsPage() {
         }
       )
 
-      const data = await res.json()
-      setBookings(data)
+      const data: Booking[] = await res.json()
+
+      // ✅ FILTER: only present + future bookings
+      const now = new Date()
+
+      const filtered = data.filter((b) => {
+        const bookingDateTime = new Date(`${b.date}T${b.time}`)
+        return bookingDateTime >= now
+      })
+
+      setBookings(filtered)
 
     } catch (err) {
       console.error(err)
@@ -61,9 +70,7 @@ export default function MentorBookingsPage() {
     }
   }
 
-  // =========================
-  // LOADING
-  // =========================
+  // ================= LOADING =================
   if (loading) {
     return (
       <p className="text-center mt-10 text-gray-500">
@@ -75,10 +82,10 @@ export default function MentorBookingsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* ================= NAVBAR ================= */}
+      {/* NAVBAR */}
       <div className="flex justify-between items-center px-6 py-4 bg-white shadow-sm sticky top-0 z-50">
 
-        {/* LEFT - LOGO */}
+        {/* LOGO */}
         <h1
           className="text-xl font-bold text-blue-600 cursor-pointer"
           onClick={() => router.push('/')}
@@ -86,7 +93,7 @@ export default function MentorBookingsPage() {
           Worthmate
         </h1>
 
-        {/* RIGHT - BACK BUTTON */}
+        {/* BACK BUTTON */}
         <Button
           onClick={() => router.push('/mentor/dashboard')}
           className="flex items-center gap-2 bg-gray-900 hover:bg-black"
@@ -97,18 +104,16 @@ export default function MentorBookingsPage() {
 
       </div>
 
-      {/* ================= MAIN ================= */}
+      {/* MAIN */}
       <div className="max-w-5xl mx-auto py-10 px-4">
 
-        {/* TITLE */}
         <h1 className="text-3xl font-bold text-gray-800 mb-6">
-          All Bookings
+          Upcoming Bookings
         </h1>
 
-        {/* EMPTY STATE */}
         {bookings.length === 0 ? (
           <Card className="p-8 text-center text-gray-500 shadow-sm">
-            No bookings found
+            No upcoming bookings
           </Card>
         ) : (
           <div className="space-y-4">
@@ -118,7 +123,6 @@ export default function MentorBookingsPage() {
                 key={b.id}
                 className="p-5 bg-white shadow-md hover:shadow-lg transition rounded-xl"
               >
-
                 <div className="flex justify-between items-center">
 
                   {/* LEFT */}
@@ -128,7 +132,7 @@ export default function MentorBookingsPage() {
                     </p>
 
                     <p className="text-gray-700">
-                      <span className="font-semibold">Time:</span> {b.time}
+                      <span className="font-semibold">Time:</span> {b.time.slice(0, 5)}
                     </p>
 
                     <p className="text-sm text-gray-500">
@@ -137,7 +141,7 @@ export default function MentorBookingsPage() {
                   </div>
 
                   {/* RIGHT */}
-                  <div className="text-right space-y-2">
+                  <div className="text-right flex flex-col space-y-2">
 
                     <span
                       className={`px-3 py-1 rounded-full text-sm font-medium ${
@@ -150,21 +154,19 @@ export default function MentorBookingsPage() {
                     </span>
 
                     {b.meetingLink && (
-                      <div>
-                        <a
-                          href={b.meetingLink}
-                          target="_blank"
-                          className="text-blue-600 text-sm underline"
-                        >
-                          Join Meeting
-                        </a>
-                      </div>
-                    )}
+                     <a
+                     href={b.meetingLink}
+                     target="_blank"
+                     rel="noopener noreferrer"
+                     className="inline-block px-4 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition"
+                     >
+                     Join Meeting
+                    </a>
+                     )}
 
                   </div>
 
                 </div>
-
               </Card>
             ))}
 
