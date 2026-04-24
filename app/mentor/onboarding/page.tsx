@@ -14,13 +14,20 @@ export default function MentorOnboarding() {
   })
 
   const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('') // ✅ NEW
+  const [message, setMessage] = useState('') 
 
   const handleChange = (e: any) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    })
+
+    const { name, value } = e.target
+
+    setFormData(prev => ({
+
+      ...prev,
+
+      [name]: value || '' // ✅ prevent null issue
+
+    }))
+
   }
 
   const handleSubmit = async (e: any) => {
@@ -46,6 +53,8 @@ export default function MentorOnboarding() {
        const errorText = await res.text()
        console.log(errorText)
        setMessage(`❌ ${errorText}`)
+       setLoading(false)
+       return
 }
 
       // ✅ SUCCESS MESSAGE (AUTO HIDE)
@@ -53,7 +62,7 @@ export default function MentorOnboarding() {
 
       setTimeout(() => {
         setMessage('')
-        router.push('/mentors')
+        router.push('/mentor/dashboard')
       }, 1000)
 
     } catch (err) {

@@ -71,9 +71,31 @@ export default function SignupPage() {
 
       const data = await response.json()
       localStorage.setItem('token', data.token)
-      localStorage.setItem('userRole', userType === 'mentor' ? 'MENTOR' : 'USER')
-      
-      router.push(userType === 'mentor' ? '/mentor/dashboard' : '/mentors')
+      localStorage.setItem(
+
+        'user',
+
+        JSON.stringify({
+
+          userId: data.userId,
+
+          mentorId: data.mentorId, // 🔥 MUST from backend
+
+          role: userType === 'mentor' ? 'MENTOR' : 'USER',
+
+        })
+
+      )
+
+      if (userType === 'mentor') {
+
+        router.push('/mentor/onboarding')
+
+      } else {
+
+        router.push('/mentors')
+
+      }
     } catch (err) {
       setError('An error occurred. Please try again.')
     } finally {
