@@ -5,166 +5,228 @@ import { useParams, useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
+declare global {
+  interface Window {
+    Razorpay: any
+  }
+}
+
 type Booking = {
   id: string
   mentorName: string
   amount: number
   mentorQrCode: string
+  availabilityId: string
+  userId: string
+  mentorId: string
 }
 
 export default function PaymentPage() {
   const params = useParams()
   const router = useRouter()
 
-  // ✅ SAFE PARAM
   const bookingId = Array.isArray(params?.bookingId)
     ? params.bookingId[0]
     : params?.bookingId
 
   const [booking, setBooking] = useState<Booking | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState('')
+  const [processing, setProcessing] = useState(false)
 
   useEffect(() => {
     if (!bookingId) return
     fetchBooking(bookingId)
   }, [bookingId])
 
+  // ✅ FIXED FUNCTION (IMPORTANT)
   const fetchBooking = async (id: string) => {
     try {
       setLoading(true)
-      setError(null)
 
-      // ✅ TOKEN CHECK
       const token = localStorage.getItem('token')
-
-      if (!token) {
-        setError('Please login first')
-        setLoading(false)
-        return
-      }
 
       const res = await fetch(
         `http://localhost:8080/api/bookings/${id}`,
         {
-          method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       )
 
-      // ✅ STATUS DEBUG
-      console.log('STATUS:', res.status)
+      const text = await res.text()
 
-      const contentType = res.headers.get('content-type')
-
-      // ❗ If backend error page (HTML)
-      if (!contentType?.includes('application/json')) {
-        const text = await res.text()
-        console.error('Non-JSON Response:', text)
-        setError('Server error (not JSON response)')
+      let data: any = null
+      try {
+        data = text ? JSON.parse(text) : null
+      } catch (err) {
+        console.error('Invalid JSON:', text)
+        setError('Server response error')
         return
       }
-
-      const data = await res.json()
-      console.log('BOOKING DATA:', data)
 
       if (!res.ok) {
-        setError(data?.message || 'Failed to load booking')
-        return
-      }
-
-      if (!data) {
-        setError('Booking not found')
+        setError(data?.message || 'Booking not found')
         return
       }
 
       setBooking(data)
 
     } catch (err) {
-      console.error('FETCH ERROR:', err)
-      setError('Network error or server not reachable')
+      console.error(err)
+      setError('Network error')
     } finally {
       setLoading(false)
     }
   }
 
-  // ✅ UI STATES
+  // ✅ LOAD RAZORPAY
+  const loadRazorpay = () => {
+    return new Promise<boolean>((resolve) => {
+      if (window.Razorpay) return resolve(true)
 
-  if (loading) {
-    return (
-      <p className="text-center mt-10 text-gray-600">
-        Loading payment...
-      </p>
-    )
+      const script = document.createElement('script')
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.onload = () => resolve(true)
+      script.onerror = () => resolve(false)
+      document.body.appendChild(script)
+    })
   }
 
-  if (error) {
-    return (
-      <p className="text-center mt-10 text-red-500">
-        {error}
-      </p>
-    )
+  // ✅ PAYMENT FLOW
+  const payNow = async () => {
+    if (!booking || processing) return
+
+    setProcessing(true)
+
+    const loaded = await loadRazorpay()
+    if (!loaded) {
+      alert('Razorpay SDK failed')
+      setProcessing(false)
+      return
+    }
+
+    const token = localStorage.getItem('token')
+
+    try {
+      const orderRes = await fetch(
+        'http://localhost:8080/api/payment/create-order',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            availabilityId: booking.availabilityId,
+            mentorId: booking.mentorId,
+            amount: booking.amount,
+          }),
+        }
+      )
+
+      const text = await orderRes.text()
+
+      let orderData: any = {}
+      try {
+        orderData = text ? JSON.parse(text) : {}
+      } catch {
+        alert('Invalid order response')
+        setProcessing(false)
+        return
+      }
+
+      if (!orderRes.ok) {
+        alert(orderData?.error || 'Order failed')
+        setProcessing(false)
+        return
+      }
+
+      const options = {
+        key: 'rzp_test_SgtlyTffgHyHOq',
+        amount: orderData.amount,
+        currency: 'INR',
+        name: 'WorthMate',
+        description: 'Booking Payment',
+        order_id: orderData.orderId,
+
+        handler: async function (response: any) {
+          try {
+            const verifyRes = await fetch(
+              'http://localhost:8080/api/payment/verify',
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                }),
+              }
+            )
+
+            if (verifyRes.ok) {
+              alert('🎉 Payment Successful')
+              router.push('/user/bookings')
+            } else {
+              alert('Verification failed')
+            }
+          } catch {
+            alert('Verification error')
+          }
+        },
+
+        theme: { color: '#22c55e' },
+      }
+
+      new window.Razorpay(options).open()
+
+    } catch (err) {
+      console.error(err)
+      alert('Payment error')
+    } finally {
+      setProcessing(false)
+    }
   }
 
-  if (!booking) {
-    return (
-      <p className="text-center mt-10">
-        No booking found
-      </p>
-    )
-  }
+  // UI
+  if (loading) return <p className="text-center mt-10">Loading...</p>
+  if (error) return <p className="text-center mt-10 text-red-500">{error}</p>
+  if (!booking) return <p className="text-center mt-10">No booking found</p>
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
 
-      <Card className="w-full max-w-lg p-6 space-y-6 shadow-xl rounded-2xl">
+      <Card className="w-full max-w-lg p-6 space-y-6 shadow-xl">
 
         <h1 className="text-xl font-bold text-center text-blue-600">
           Payment Dashboard
         </h1>
 
-        {/* Mentor Info */}
         <div className="text-center">
-          <h2 className="text-lg font-semibold">
-            {booking.mentorName}
-          </h2>
-
-          <p className="text-sm text-gray-500">
-            Booking ID: {booking.id}
-          </p>
+          <h2>{booking.mentorName}</h2>
+          <p>Booking ID: {booking.id}</p>
         </div>
 
-        {/* Amount */}
         <div className="text-center bg-green-50 p-4 rounded-lg border">
-          <p className="text-sm text-gray-600">Total Amount</p>
+          <p>Total Amount</p>
           <p className="text-3xl font-bold text-green-600">
             ₹ {booking.amount}
           </p>
         </div>
 
-        {/* QR */}
-        <div className="flex flex-col items-center">
-          <p className="font-medium mb-3">Scan to Pay</p>
+        <img src={booking.mentorQrCode} className="w-52 h-52 mx-auto" />
 
-          <img
-            src={booking.mentorQrCode || 'https://via.placeholder.com/200'}
-            alt="QR Code"
-            className="w-52 h-52 border rounded-lg p-2 bg-white"
-          />
-
-          <p className="text-xs text-gray-500 mt-2">
-            Pay via UPI / GPay / PhonePe
-          </p>
-        </div>
-
-        {/* Button */}
         <Button
-          className="w-full"
-          onClick={() => router.push('/mentors')}
+          onClick={payNow}
+          disabled={processing}
+          className="w-full bg-green-600"
         >
-          I have completed payment
+          {processing ? 'Processing...' : 'Pay Now'}
         </Button>
 
       </Card>

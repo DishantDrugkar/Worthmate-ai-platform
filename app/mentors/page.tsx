@@ -132,8 +132,13 @@ export default function MentorsPage() {
             <span className="text-xl font-bold text-foreground">Worthmate</span>
           </Link>
           <div className="flex items-center gap-4">
+             {/* 🔥 VIEW BOOKINGS */}
+            <Link href="/user/bookings">
+            <Button variant="outline">📋 View Bookings</Button>
+            </Link>
+
             <Link href="/profile">
-              <Button variant="ghost">Profile</Button>
+              <Button variant="outline">👤 Profile</Button>
             </Link>
             <Button variant="outline" onClick={handleLogout}>
               Sign Out
